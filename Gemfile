@@ -34,7 +34,7 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem 'byebug'
+  # gem 'byebug'
 end
 
 group :development do
@@ -48,7 +48,9 @@ end
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 # гем Nokogiri - это HTML, XML, SAX , и RSS парсер
-gem 'nokogiri'
+gem 'nokogiri', '1.6.7.2'
 
 # solve app/views/layouts/application.html.erb where line #5(stylesheet_link_tag    'application') raised:
 gem 'coffee-script-source', '1.8.0'
+
+#gem "ruby-debug19x", :require => 'ruby-debug'

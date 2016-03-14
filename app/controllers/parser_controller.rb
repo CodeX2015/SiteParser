@@ -6,23 +6,28 @@ class ParserController < ApplicationController
   require 'nokogiri'
 
   # noinspection SpellCheckingInspection
-  def yandex
+  def fl
     source = 'https://www.fl.ru/projects/'
 # + page
     # получаем содержимое веб-страницы в объект
     page = Nokogiri::HTML(open(source.to_s, 'User-Agent' => 'Opera'))
+    @page_class = page.class
     # производим поиск по элементам с помощью css-выборки
-    page.css('a.b-post__link').each do |link|
+    page.css('div.b-post').each do |link|
 
-      data = Hash.new
+      #@link = link
+      @link_title = link.css('h2 a').text
+      @link_price = link.css('script').text #.scan(/document.write\('\)/)
 
-      data['text'] = link.content
+      #data = Hash.new
 
-      data['href'] = link['href']
-      puts('')
+      #data['title'] = link[0].text
+
+      # data['href'] = link['href']
+      #puts(data[0].to_s)
     end
 
-    return data
+    #return data
 
   end
 end
