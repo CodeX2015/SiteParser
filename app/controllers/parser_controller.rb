@@ -19,6 +19,7 @@ class ParserController < ApplicationController
       data['text'] = link.content
 
       data['href'] = link['href']
+      puts('')
     end
 
     return data
