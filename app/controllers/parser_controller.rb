@@ -5,28 +5,37 @@ class ParserController < ApplicationController
   # подключаем Nokogiri
   require 'nokogiri'
 
+  # подключаем iconv
+  # require 'iconv'
+
   # noinspection SpellCheckingInspection
   def fl
     source = 'https://www.fl.ru/projects/'
 # + page
 # получаем содержимое веб-страницы в объект
-    page = Nokogiri::HTML(open(source.to_s, 'User-Agent' => 'Opera', 'Accept-Charset' => 'Windows-1251'))
-    @page_class = page.class
+    page = Nokogiri::HTML(open(source.to_s, 'User-Agent' => 'Opera'))
+    #@page_class = page.class
 # производим поиск по элементам с помощью css-выборки
 
     page.css('div.b-post').each do |link|
 
-      @link = link.to_s.force_encoding('cp1251') #.to_s.force_encoding('cp1251')
+     #@link = link.text.to_s.force_encoding('cp1251') #.to_s.force_encoding('cp1251')
       @link_title = link.css('a').text.to_s.force_encoding("cp1251")
       @link_href = 'https://www.fl.ru' + link.css("a").map { |a| a['href'] }[0].to_s.force_encoding("cp1251")
-      #@link_price = link.css('div').text.to_s.force_encoding('cp1251')
+      price = link.css('script')[0].text
+      price = price[price.index('(')+2..price.index(')')-2]
+      body = link.css('script')[1].text
+      body = body[body.index('(')+2..body.index(')')-2]
+      @link_price = ActionView::Base.full_sanitizer.sanitize(price).to_s.force_encoding("cp1251")
+      @link_body = ActionView::Base.full_sanitizer.sanitize(body).to_s.force_encoding("cp1251")
+      create_date = link.css('script')[2].text
+      create_date = create_date[create_date.index('(')+2..create_date.index(')')-2]
 
-      @ssss = link.css('script')[0].text.to_s.force_encoding("cp1251") #.split(';')
-      @link_price = @ssss[@ssss.index('">')+2..@ssss.index('</')-2]
+      @link_date = ActionView::Base.full_sanitizer.sanitize(create_date).to_s.force_encoding("cp1251")
 
-      #@ssss.index('">')
+      Project.create(title: @link_title.force_encoding("cp1251"))
 
-      #@ssss[@ssss.index('(') + 2.. @ssss.index(')')-2]
+
       break
 
 
