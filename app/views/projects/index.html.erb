@@ -5,15 +5,25 @@
 <table>
   <thead>
   <tr>
-    <th colspan="3"></th>
+    <td>created</td>
+    <td>title</td>
+    <td>description</td>
+    <td>link</td>
+    <td>price</td>
+    <th colspan="3">Actions</th>
   </tr>
   </thead>
 
   <tbody>
+
   <% @projects.each do |project| %>
 
       <tr>
+        <td><%= project.create_date %> </td>
         <td><%= project.title %> </td>
+        <td><%= project.short_body %> </td>
+        <td><%= link_to project.link, project.link %> </td>
+        <td><%= project.price %> </td>
         <td><%= link_to 'Show', project %></td>
         <td><%= link_to 'Edit', edit_project_path(project) %></td>
         <td><%= link_to 'Destroy', project, method: :delete, data: {confirm: 'Are you sure?'} %></td>
