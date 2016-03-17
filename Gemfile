@@ -47,10 +47,9 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
-# гем Nokogiri - это HTML, XML, SAX , и RSS парсер
-gem 'nokogiri', '1.6.7.2'
-
 # solve app/views/layouts/application.html.erb where line #5(stylesheet_link_tag    'application') raised:
 gem 'coffee-script-source', '1.8.0'
 
-#gem "ruby-debug19x", :require => 'ruby-debug'
+# гем Nokogiri - это HTML, XML, SAX , и RSS парсер
+gem 'nokogiri', '1.6.7.2'
+gem 'watir-webdriver', '0.9.1'

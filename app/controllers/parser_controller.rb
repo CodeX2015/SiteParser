@@ -4,12 +4,30 @@ class ParserController < ApplicationController
 
   # подключаем Nokogiri
   require 'nokogiri'
+  require 'watir-webdriver'
 
-  # подключаем iconv
-  # require 'iconv'
+  browser = Watir::Browser.new :firefox #:phantomjs #
+  browser.window.resize_to(1366, 768)
+  #browser.driver.manage.window.maximize
+  browser.goto 'https://www.fl.ru/projects/'
+  @m = browser.html
+  begin
+    #vvv = browser.div(:class, 'b-combo').click #.when_present
+    vvv = browser.div(:xpath, '//*[@id="frm"]/div[1]/div[1]/div/table/tbody/tr/td[1]/div')
+    vvv.click
+    #nnn = vvv.visible?
 
-  def clear_of_html_tags(str)
-    return ActionView::Base.full_sanitizer.sanitize(str)
+    #element = browser.span(:xpath, '//*[@id="frm"]/div[1]/div[1]/div/table/tbody/tr/td[1]/div/div[2]/div/div/div/div/div/table/tbody/tr/td[1]/ul/li[4]/span')
+    #vvv = element.click #.inner_html
+    #element(:xpath, "[@text='Программирование']").click()
+    #browser.span(:text, 'Программирование').click #.when_present
+    # browser.link(:onclick, 'FilterCatalogAddCategoryType();').click
+    # browser.button(:onclick, '$(\'frm\').submit();').click
+    @m = browser.html
+    n = 1
+  rescue Exception => ex
+    browser.close
+    logger.error ex.message
   end
 
   # noinspection SpellCheckingInspection
@@ -23,7 +41,7 @@ class ParserController < ApplicationController
 
     page.css('div.b-post').each do |link|
 
-      #@link = link.text.to_s.force_encoding('cp1251') #.to_s.force_encoding('cp1251')
+      @link = link.text.to_s.force_encoding('cp1251') #.to_s.force_encoding('cp1251')
 
       title = link.css('a').text.to_s
 
@@ -41,7 +59,7 @@ class ParserController < ApplicationController
 
       begin
         Project.create(create_date: create_date, title: title, short_body: body, link: href, price: price)
-      rescue :ex
+      rescue Exception => ex
         logger.error ex.message
       end
 
@@ -53,6 +71,13 @@ class ParserController < ApplicationController
 
       break
     end
-
   end
+
+  browser.close
+
+  def clear_of_html_tags(str)
+    return ActionView::Base.full_sanitizer.sanitize(str)
+  end
+
+
 end
