@@ -6,47 +6,14 @@ class ParserController < ApplicationController
   require 'nokogiri'
   require 'watir-webdriver'
 
-  #url = 'http://www.cy-pr.com/tools/browser/'
-  url = 'https://www.fl.ru/projects/'
-  args = %w{--ignore-ssl-errors=true}
-  browser = Watir::Browser.new :phantomjs, :args => args #:firefox #
-  browser.window.resize_to(1366, 768)
-  #browser.driver.manage.window.maximize
-  browser.goto url
-  @m = browser.html
-  begin
-    browser.div(:class, 'b-combo').when_present.click
-
-    # browser.link(:href, '/projects/?kind=1').click
-
-    # vvv = browser.div(:xpath, '//*[@id="frm"]/div[1]/div[1]/div/table/tbody/tr/td[1]/div')
-    # vvv.when_present.click
-    vvv = browser.span()
-    nE = vvv.exists?
-    nV = vvv.visible?
-    sleep 1
-    browser.screenshot.save 'C:/screenshot.png'
-    #element = browser.span(:xpath, '//*[@id="frm"]/div[1]/div[1]/div/table/tbody/tr/td[1]/div/div[2]/div/div/div/div/div/table/tbody/tr/td[1]/ul/li[4]/span')
-    #Watir::Wait.until { element.visible? }
-    #nn = element.visible?
-    #vvv = element.click #.inner_html
-    #element(:xpath, "[@text='Программирование']").click()
-    #browser.span(:text, 'Программирование').click #.when_present
-    # browser.link(:onclick, 'FilterCatalogAddCategoryType();').click
-    # browser.button(:onclick, '$(\'frm\').submit();').click
-    @m = browser.html
-    n = 1
-  rescue Exception => ex
-    browser.close
-    logger.error ex.message
-  end
-
   # noinspection SpellCheckingInspection
   def fl
-    source = 'https://www.fl.ru/projects/'
-# + page
+    #url = 'http://www.cy-pr.com/tools/browser/'
+    @url = 'https://www.fl.ru/projects/'
+    set_projects_filter('Программирование')
+
 # получаем содержимое веб-страницы в объект
-    page = Nokogiri::HTML(open(source.to_s, 'User-Agent' => 'Opera'))
+    page = Nokogiri::HTML(open(@url, 'User-Agent' => 'Opera'))
     @page_class = page.class
 # производим поиск по элементам с помощью css-выборки
 
@@ -84,11 +51,30 @@ class ParserController < ApplicationController
     end
   end
 
-  browser.close
+  def set_projects_filter(filter)
+    args = %w{--ignore-ssl-errors=true}
+    browser = Watir::Browser.new :phantomjs, :args => args #:firefox #
+    browser.window.resize_to(1366, 768)
+    #browser.window.maximize
+    browser.goto @url
+    begin
+      browser.div(:class, 'b-combo').double_click
+      # browser.link(:href, '/projects/?kind=1').click
+      # element = browser.table(:xpath, '//*[@id="frm"]/div[1]/div[1]/div/table')
+      browser.span(:text, filter).click #.when_present
+      browser.link(:onclick, 'FilterCatalogAddCategoryType();').click
+      browser.button(:onclick, '$(\'frm\').submit();').click
+      browser.screenshot.save 'C:/screenshot.png'
+      @url_html = browser.html.gsub('"', '').clone
+    rescue Exception => ex
+      if browser.exists? then browser.close end
+      logger.error ex.message
+    end
+    if browser.exists? then browser.close end
+  end
 
   def clear_of_html_tags(str)
     return ActionView::Base.full_sanitizer.sanitize(str)
   end
-
 
 end
