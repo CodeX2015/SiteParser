@@ -1,6 +1,5 @@
 source 'https://rubygems.org'
 
-
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.5.2'
 # Use sqlite3 as the database for Active Record
@@ -50,6 +49,5 @@ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 # solve app/views/layouts/application.html.erb where line #5(stylesheet_link_tag    'application') raised:
 gem 'coffee-script-source', '1.8.0'
 
-# гем Nokogiri - это HTML, XML, SAX , и RSS парсер
-gem 'nokogiri', '1.6.7.2'
+# гем
 gem 'watir-webdriver', '0.9.1'

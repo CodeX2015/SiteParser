@@ -158,7 +158,6 @@ DEPENDENCIES
   coffee-script-source (= 1.8.0)
   jbuilder (~> 2.0)
   jquery-rails
-  nokogiri (= 1.6.7.2)
   rails (= 4.2.5.2)
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
