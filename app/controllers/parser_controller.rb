@@ -11,6 +11,7 @@ class ParserController < ApplicationController
     @url = 'https://www.fl.ru/projects/'
 
     filter = 'Программирование'
+    bEndFlag = false
 
     args = %w{--ignore-ssl-errors=true}
     browser = Watir::Browser.new :phantomjs, :args => args #:firefox #
@@ -27,35 +28,55 @@ class ParserController < ApplicationController
     browser.link(:onclick, 'FilterCatalogAddCategoryType();').click
     browser.button(:onclick, '$(\'frm\').submit();').click
 
-    browser.divs(:class, 'b-post').each do |project|
-      # check for exists next page
-      # browser.goto('https://www.fl.ru/projects/?page=379&kind=5')
-      # nn=browser.li(:class, 'b-pager__next').exists?
 
-      mm = project.html
+    # for debug
+    browser.goto 'https://www.fl.ru/projects/?page=378&kind=5'
+
+    begin
+
       browser.screenshot.save 'app/assets/images/screenshot.png'
-      @url_html = browser.html.clone
 
-      @link = browser.ul(:class, 'b-combo__list').inner_html
-      @link = clear_of_html_tags(@link) #.split(/(?=[A-Z])/)
+      browser.divs(:class, 'b-post').each do |project|
+        # check for exists next page
+        # browser.goto('https://www.fl.ru/projects/?page=379&kind=5')
+        # nn=browser.li(:class, 'b-pager__next').exists?
 
-      @link_title = project.a(:class, 'b-post__link').text
-      @link_href = project.a(:class, 'b-post__link').attribute_value 'href'
-      @link_price = project.div(:class, 'b-post__price').text
-      @link_body = project.div(:class, 'b-post__txt').text
+        @url_html = browser.html.clone
 
-      # string = '9 ответов 182 Проект 18 января, 16:19 Только для'
-      # '11 ответов 1233 Вакансия (Россия, Сочи)    9 апреля 2015, 13:57  '
-      date = project.div(:class, 'b-post__foot').div(:class, 'b-post__txt').text
-      if date.scan('роект').size > 0 && date.scan('Только').size > 0 then
-        @link_date = (date[(date.index('роект') + 'роект'.length)..date.index('Только')-1]).strip
-      else
-        @link_date = date
+        @link = browser.ul(:class, 'b-combo__list').inner_html
+        @link = clear_of_html_tags(@link) #.split(/(?=[A-Z])/)
+
+        @link_title = project.a(:class, 'b-post__link').text
+        @link_href = project.a(:class, 'b-post__link').attribute_value 'href'
+        @link_price = project.div(:class, 'b-post__price').text
+        @link_body = project.div(:class, 'b-post__txt').text
+
+        # '9 ответов 182 Проект 18 января, 16:19 Только для'
+        # '11 ответов 1233 Вакансия (Россия, Сочи)    9 апреля 2015, 13:57  ' - берется без обработки
+        date = project.div(:class, 'b-post__foot').div(:class, 'b-post__txt').text
+        if date.scan('роект').size > 0 && date.scan('Только').size > 0 then
+          @link_date = (date[(date.index('роект') + 'роект'.length)..date.index('Только')-1]).strip
+        else
+          @link_date = date
+        end
+
+        write_to_db
+
+        # for debug
+        break
+
       end
-
-      write_to_db
-      #break
-      n=1
+      # check for exists next page
+      if browser.li(:class, 'b-pager__next').exists? then
+        # next_href = browser.li(:class, 'b-pager__next').a(:id, 'PrevLink').attribute_value 'href'
+        browser.goto(browser.li(:class, 'b-pager__next').a(:id, 'PrevLink').attribute_value 'href')
+        bEndFlag = false
+      else
+        bEndFlag = true
+      end
+    end until bEndFlag
+    if browser.exists? then
+      browser.close
     end
     # rescue Exception => ex
     #   if browser.exists? then
@@ -63,9 +84,6 @@ class ParserController < ApplicationController
     #   end
     #   logger.error ex.message
     # end
-    if browser.exists? then
-      browser.close
-    end
   end
 
   def write_to_db
