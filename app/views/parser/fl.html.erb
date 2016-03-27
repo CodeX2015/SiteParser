@@ -1,12 +1,13 @@
 <h1>Parser#parsing</h1>
 <p>Find me in app/views/parser/parsing.html.erb</p>
-<p>page_class: <%= @page_class %> </p>
+<p>test_date: <%= @test_day %> </p>
 <p>link:<%= @link %> </p>
 <p>link_title: <%= @link_title %> </p>
 <p>link_href: <%= link_to(@link_href, @link_href) %> </p>
 <p>link_price: <%= @link_price %> </p>
-<p>link_body: <%= @link_body %> </p>
+<p>link_body: <%= if @link_body_href.nil? then @link_body else link_to(@link_body, @link_body_href) end %> </p>
 <p>link_date: <%= @link_date %> </p>
+<p>link_next_page: <%= link_to(@next_page, @next_page) %> </p>
 
 
 <br>
