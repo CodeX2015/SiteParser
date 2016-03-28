@@ -6,11 +6,13 @@ class ParserController < ApplicationController
   require 'watir-webdriver'
 
   require 'russian'
+  @@semaphore = Mutex.new
 
   # noinspection SpellCheckingInspection
   def fl
     # test_func
-    parse_weblancer_net
+    Thread.new { parse_freelance_ru }
+    #Thread.new { parse_weblancer_net }
     return
     parse_freelance_ru
     parse_freelansim_ru
@@ -30,6 +32,7 @@ class ParserController < ApplicationController
   end
 
   def parse_freelance_ru
+    Thread.current[:name] = 'parse_freelance_ru'
     url = 'https://freelance.ru/projects/'
     filter = '?spec=4'
     args = %w{--ignore-ssl-errors=true}
@@ -38,6 +41,7 @@ class ParserController < ApplicationController
     browser.goto url + filter
 
     browser.screenshot.save 'app/assets/images/screenshot_freelance.png'
+    i = 0
     browser.div(:class, 'projects').divs(:class, 'proj').each do |project|
       @link = project.inner_html
       @next_page = browser.a(:title, 'на следующую страницу').attribute_value 'href'
@@ -46,8 +50,13 @@ class ParserController < ApplicationController
       @link_body = project.a(:class, 'descr').spans[1].text
       @link_href = project.a(:class, 'ptitle').attribute_value 'href'
       @link_price = project.span(:class, 'cost').text
+      write_to_db
 
-      break
+      logger.info Thread.current[:name].to_s + ' - ' + i.to_s
+      i+=1
+      if i == 1
+        break
+      end
     end
 
     if browser.exists? then
@@ -82,6 +91,7 @@ class ParserController < ApplicationController
   end
 
   def parse_weblancer_net
+    Thread.current[:name] = 'parse_weblancer_net'
     url = 'https://www.weblancer.net/projects/'
     filter = '?category_id=2'
     bEndFlag = false
@@ -93,6 +103,7 @@ class ParserController < ApplicationController
     browser.goto url + filter
 
     browser.screenshot.save 'app/assets/images/screenshot_weblancer.png'
+    i = 0
     browser.div(:class, 'cols_table').divs(:class, 'row').each do |project|
       @link = project.inner_html
       @next_page = browser.a(:text, 'Следующая').attribute_value 'href'
@@ -106,8 +117,13 @@ class ParserController < ApplicationController
       else
         @link_price = project.div(:class, 'col-sm-2').text
       end
+       write_to_db
 
-      break
+      logger.info Thread.current[:name].to_s + ' - ' + i.to_s
+      i+=1
+      if i == 10
+        break
+      end
     end
 
     if browser.exists? then
@@ -253,7 +269,10 @@ class ParserController < ApplicationController
   private
   def write_to_db
     begin
+
+      logger.debug 'Current thread is: ' + Thread.current[:name]
       Project.create(create_date: @link_date, title: @link_title, short_body: @link_body, link: @link_href, price: @link_price)
+
     rescue Exception => ex
       logger.error ex.message
     end
