@@ -53,3 +53,7 @@ gem 'coffee-script-source', '1.8.0'
 gem 'watir-webdriver', '0.9.1'
 
 gem 'russian'
+
+gem 'parallel'
+
+gem 'celluloid'

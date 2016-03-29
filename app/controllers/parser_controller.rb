@@ -6,13 +6,32 @@ class ParserController < ApplicationController
   require 'watir-webdriver'
 
   require 'russian'
+
+  require 'parallel'
+
   @@semaphore = Mutex.new
 
   # noinspection SpellCheckingInspection
   def fl
     # test_func
-    Thread.new { parse_freelance_ru }
-    #Thread.new { parse_weblancer_net }
+
+    Parallel.each([1, 2], in_threads: 2) { |method|
+      case method
+        when 1
+          logger.info 'start parse_freelance_ru'
+          parse_freelance_ru
+        when 2
+          logger.info 'start parse_weblancer_net'
+          parse_weblancer_net
+        else
+          logger.info 'case else'
+      end
+
+    }
+
+
+    # Thread.new { parse_freelance_ru }
+    # Thread.new { parse_weblancer_net }
     return
     parse_freelance_ru
     parse_freelansim_ru
@@ -117,7 +136,7 @@ class ParserController < ApplicationController
       else
         @link_price = project.div(:class, 'col-sm-2').text
       end
-       write_to_db
+      write_to_db
 
       logger.info Thread.current[:name].to_s + ' - ' + i.to_s
       i+=1
