@@ -2,11 +2,13 @@ class ParserController < ApplicationController
   # для получения контента через http
   require 'open-uri'
 
-  # подключаем Watir
+  # для управления headless браузером phantomjs
   require 'watir-webdriver'
 
+  # для работы с русским названиями месяцев
   require 'russian'
 
+  # для многопоточной работы
   require 'parallel'
 
   @@semaphore = Mutex.new
@@ -14,7 +16,7 @@ class ParserController < ApplicationController
   # noinspection SpellCheckingInspection
   def fl
     # test_func
-    Thread.new { parallel_work }
+    # Thread.new { parallel_work }
     @test_day = Russian::strftime(Time.now, "%d %B")
 
     # Thread.new { parse_freelance_ru }
@@ -23,10 +25,28 @@ class ParserController < ApplicationController
     parse_freelance_ru
     parse_freelansim_ru
     parse_weblancer_net
-    t = Thread.new { parse_fl_ru }
+    parse_fl_ru
     @test_day = Russian::strftime(Time.now, "%d %B")
     t.join
     # redirect_to :back
+  end
+
+  def get_json_data
+    user = 'parse-robot'
+    password = 'qazQAZqwe123'
+    # initiate config
+    # config = Upwork::Api::Config.new({
+    consumer_key =	'9440740657a1a068f012f4f0c5e5231b'
+    consumer_secret =	'3ecbba180b78770e'
+
+    # https://github.com/upwork/ruby-upwork/blob/master/example/myapp.rb
+
+    # 'access_token'    => 'xxxxxxxx',# assign if known
+    # 'access_secret'   => 'xxxxxxxx',# assign if known
+    # 'debug'           => false
+    # })
+    url =
+    JSON.load(open("https://api.github.com"))
   end
 
   def test_func
