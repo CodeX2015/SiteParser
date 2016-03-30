@@ -45,8 +45,8 @@ class ParserController < ApplicationController
     # 'access_secret'   => 'xxxxxxxx',# assign if known
     # 'debug'           => false
     # })
-    url =
-    JSON.load(open("https://api.github.com"))
+    url = "https://api.github.com"
+    JSON.load(open(url))
   end
 
   def test_func
