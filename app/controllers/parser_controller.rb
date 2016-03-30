@@ -14,21 +14,8 @@ class ParserController < ApplicationController
   # noinspection SpellCheckingInspection
   def fl
     # test_func
-
-    Parallel.each([1, 2], in_threads: 2) { |method|
-      case method
-        when 1
-          logger.info 'start parse_freelance_ru'
-          parse_freelance_ru
-        when 2
-          logger.info 'start parse_weblancer_net'
-          parse_weblancer_net
-        else
-          logger.info 'case else'
-      end
-
-    }
-
+    Thread.new { parallel_work }
+    @test_day = Russian::strftime(Time.now, "%d %B")
 
     # Thread.new { parse_freelance_ru }
     # Thread.new { parse_weblancer_net }
@@ -50,10 +37,44 @@ class ParserController < ApplicationController
     nnnm = 1
   end
 
+  def parallel_work
+    start_time = Time.now
+
+    # 3 Processes -> finished after 1 run
+    #     results = Parallel.map(['a','b','c'], in_processes: 3) { |one_letter| ... }
+    # 3 Threads -> finished after 1 run
+    #     results = Parallel.map(['a','b','c'], in_threads: 3) { |one_letter| ... }
+
+    Parallel.each([1, 2], in_threads: 2) { |method|
+      case method
+        when 1
+          logger.info 'start parse_freelance_ru'
+          parse_freelance_ru
+        when 2
+          logger.info 'start parse_weblancer_net'
+          parse_weblancer_net
+        else
+          logger.info 'case else'
+      end
+
+    }
+
+    # old school
+    # t1 = Thread.new { parse_freelance_ru }
+    # t2 = Thread.new { parse_weblancer_net }
+    # t1.join
+    # t2.join
+
+    end_time = Time.now
+    delta = end_time - start_time
+    logger.info 'Time: ' + delta.to_s + ' s'
+  end
+
   def parse_freelance_ru
     Thread.current[:name] = 'parse_freelance_ru'
     url = 'https://freelance.ru/projects/'
     filter = '?spec=4'
+    parse_results = []
     args = %w{--ignore-ssl-errors=true}
     browser = Watir::Browser.new :phantomjs, :args => args #:firefox #
     browser.window.resize_to(1366, 768)
@@ -69,11 +90,13 @@ class ParserController < ApplicationController
       @link_body = project.a(:class, 'descr').spans[1].text
       @link_href = project.a(:class, 'ptitle').attribute_value 'href'
       @link_price = project.span(:class, 'cost').text
-      write_to_db
 
       logger.info Thread.current[:name].to_s + ' - ' + i.to_s
+      parse_results << ParseResult.new(@link_date, @link_title, @link_body, @link_href, @link_price)
+
+
       i+=1
-      if i == 1
+      if i == 10
         break
       end
     end
@@ -81,6 +104,7 @@ class ParserController < ApplicationController
     if browser.exists? then
       browser.close
     end
+    write_to_db(parse_results)
   end
 
   def parse_freelansim_ru
@@ -122,8 +146,10 @@ class ParserController < ApplicationController
     browser.goto url + filter
 
     browser.screenshot.save 'app/assets/images/screenshot_weblancer.png'
+    parse_results = []
     i = 0
     browser.div(:class, 'cols_table').divs(:class, 'row').each do |project|
+
       @link = project.inner_html
       @next_page = browser.a(:text, 'Следующая').attribute_value 'href'
       @link_date = project.span(:class, 'time_ago').text
@@ -136,9 +162,12 @@ class ParserController < ApplicationController
       else
         @link_price = project.div(:class, 'col-sm-2').text
       end
-      write_to_db
 
       logger.info Thread.current[:name].to_s + ' - ' + i.to_s
+
+
+      parse_results << ParseResult.new(@link_date, @link_title, @link_body, @link_href, @link_price)
+
       i+=1
       if i == 10
         break
@@ -148,6 +177,7 @@ class ParserController < ApplicationController
     if browser.exists? then
       browser.close
     end
+    write_to_db(parse_results)
   end
 
 
@@ -286,19 +316,41 @@ class ParserController < ApplicationController
   end
 
   private
-  def write_to_db
-    begin
-
-      logger.debug 'Current thread is: ' + Thread.current[:name]
-      Project.create(create_date: @link_date, title: @link_title, short_body: @link_body, link: @link_href, price: @link_price)
-
-    rescue Exception => ex
-      logger.error ex.message
-    end
+  def write_to_db(parse_results)
+    logger.debug 'Current thread before is: ' + Thread.current[:name]
+    @@semaphore.synchronize {
+      begin
+        logger.debug 'Current thread after is: ' + Thread.current[:name]
+        parse_results.each do |project|
+          Project.create(create_date: project.create_date, title: project.title,
+                         short_body: project.short_body, link: project.link, price: project.price)
+        end
+      rescue Exception => ex
+        logger.error ex.message
+      end
+    }
   end
 
   def clear_of_html_tags(str)
     return ActionView::Base.full_sanitizer.sanitize(str)
+  end
+
+  class ParseResult
+    def initialize(create_date, title, short_body, link, price)
+      # Instance variables
+      @create_date = create_date
+      @title = title
+      @short_body = short_body
+      @link = link
+      @price = price
+    end
+
+    attr_accessor :create_date
+    attr_accessor :title
+    attr_accessor :short_body
+    attr_accessor :link
+    attr_accessor :price
+
   end
 
 end

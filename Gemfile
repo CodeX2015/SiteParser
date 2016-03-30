@@ -55,5 +55,3 @@ gem 'watir-webdriver', '0.9.1'
 gem 'russian'
 
 gem 'parallel'
-
-gem 'celluloid'
